@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 	"time"
 
 	"github.com/astaxie/beego"
+	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/models"
 )
 
 // UsuariosController operations for Usuarios
@@ -22,6 +24,7 @@ func (c *UsuariosController) URLMapping() {
 	c.Mapping("GetOne", c.GetOne)
 	c.Mapping("GetAll", c.GetAll)
 	c.Mapping("Put", c.Put)
+	c.Mapping("Put", c.PutContraseña)
 	c.Mapping("Delete", c.Delete)
 }
 
@@ -171,6 +174,64 @@ func (c *UsuariosController) Put() {
 	}
 
 	// Servir la respuesta JSON al frontend
+	c.ServeJSON()
+}
+
+// PutContraseña ...
+// @Title PutContraseña
+// @Description Cambiar la contraseña de un usuario
+// @Param	id		path 	string	true		"El ID del usuario"
+// @Param	body		body 	models.CambioContraseña	true		"El cuerpo de la solicitud con la contraseña actual y la nueva contraseña"
+// @Success 200 {object} map[string]interface{}
+// @Failure 403 body is empty
+// @router /cambiar-contrasena/:id [put]
+func (c *UsuariosController) PutContraseña() {
+	// Obtener el ID del usuario desde la URL
+	idStr := c.Ctx.Input.Param(":id")
+	id, _ := strconv.Atoi(idStr)
+
+	// Definir la estructura de la solicitud para la contraseña
+	var v models.CambioContraseña
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &v); err != nil {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Datos inválidos"}
+		c.ServeJSON()
+		return
+	}
+
+	// Buscar el usuario por ID en la base de datos
+	usuario, err := models.GetUsuariosById(id)
+	if err != nil {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Usuario no encontrado"}
+		c.ServeJSON()
+		return
+	}
+
+	// Verificar que la contraseña actual proporcionada coincida con la almacenada
+	// Aquí puedes usar una función como bcrypt.CompareHashAndPassword para hacer la comparación
+	if usuario.Contrasena != v.ContrasenaActual {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Contraseña actual incorrecta"}
+		c.ServeJSON()
+		return
+	}
+
+	// Hashear la nueva contraseña antes de guardarla
+	hashedPassword, err := models.HashearContraseña(v.ContrasenaNueva)
+	if err != nil {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al hashear la nueva contraseña"}
+		c.ServeJSON()
+		return
+	}
+
+	// Actualizar la contraseña del usuario en la base de datos
+	usuario.Contrasena = hashedPassword
+	if err := models.UpdateUsuariosById(usuario); err != nil {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al actualizar la contraseña"}
+		c.ServeJSON()
+		return
+	}
+
+	// Responder con éxito
+	c.Data["json"] = map[string]interface{}{"success": true, "message": "Contraseña cambiada correctamente"}
 	c.ServeJSON()
 }
 
