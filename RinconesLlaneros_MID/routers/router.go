@@ -14,12 +14,7 @@ import (
 )
 
 func init() {
-	ns := beego.NewNamespace("/v1",
-		beego.NSNamespace("/object",
-			beego.NSInclude(
-				&controllers.UsuariosController{},
-			),
-		),
-	)
-	beego.AddNamespace(ns)
+	// Ruta para la actualización de un usuario
+	beego.Router("/v1/Usuarios/:id", &controllers.UsuariosController{}, "put:Put")
 }
+

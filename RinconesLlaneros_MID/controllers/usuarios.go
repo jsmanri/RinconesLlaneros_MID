@@ -3,6 +3,7 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
@@ -70,24 +71,22 @@ func (c *UsuariosController) GetAll() {
 // @Success 200 {object} models.Usuarios
 // @Failure 403 :id is not int
 // @router /:id [put]
+// Put reenvía la solicitud PUT a otro API (backend)
 func (c *UsuariosController) Put() {
-	// Definir la URL del API CRUD (esto puede provenir de la configuración)
-	id := c.Ctx.Input.Param(":id")                      // Obtenemos el ID del usuario desde la URL
-	apiURL := "http://localhost:8082/v1/Usuarios/" + id // Asegúrate de que esta URL esté bien configurada
+	// Obtén el ID del usuario desde la URL
+	id := c.Ctx.Input.Param(":id")
 
-	// Crear la estructura que enviarás en el PUT, adaptándola a tu modelo de datos
-	usuario := map[string]interface{}{
-		"Nombre":         "Nuevo Nombre",
-		"Correo":         "nuevo@correo.com",
-		"Cedula":         "1234567890",
-		"NumeroTelefono": "123456789",
-	}
+	// Definir la URL del backend
+	apiURL := "http://localhost:8082/v1/Usuarios/" + id // Cambia esta URL al endpoint correcto de tu backend
 
-	// Convertir la estructura a JSON
-	usuarioJSON, err := json.Marshal(usuario)
-	if err != nil {
+	// Estructura para recibir los datos actualizados del usuario
+	var usuario map[string]interface{}
+
+	// Deserializamos el cuerpo de la solicitud JSON en la variable 'usuario'
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &usuario); err != nil {
+		fmt.Println("Error al parsear el JSON:", err)
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Error al crear el JSON de la solicitud",
+			"Message": "Error al parsear el JSON",
 			"status":  500,
 			"success": false,
 		}
@@ -95,10 +94,13 @@ func (c *UsuariosController) Put() {
 		return
 	}
 
-	// Realizar la solicitud PUT al API CRUD
-	client := &http.Client{Timeout: 10 * time.Second} // Tiempo de espera para la solicitud
+	// Crear una nueva solicitud PUT al backend
+	client := &http.Client{Timeout: 10 * time.Second} // Establecer un tiempo de espera
+	usuarioJSON, _ := json.Marshal(usuario)           // Convertimos los datos a JSON
+
 	req, err := http.NewRequest("PUT", apiURL, bytes.NewBuffer(usuarioJSON))
 	if err != nil {
+		fmt.Println("Error al crear la solicitud:", err)
 		c.Data["json"] = map[string]interface{}{
 			"Message": "Error al crear la solicitud",
 			"status":  500,
@@ -108,14 +110,15 @@ func (c *UsuariosController) Put() {
 		return
 	}
 
-	// Establecer el tipo de contenido como JSON
+	// Establecer encabezados de la solicitud
 	req.Header.Set("Content-Type", "application/json")
 
-	// Hacer la solicitud y obtener la respuesta
+	// Realizar la solicitud PUT al backend
 	resp, err := client.Do(req)
 	if err != nil {
+		fmt.Println("Error al realizar la solicitud al backend:", err)
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Error al realizar la solicitud al API CRUD",
+			"Message": "Error al realizar la solicitud al backend",
 			"status":  500,
 			"success": false,
 		}
@@ -124,11 +127,12 @@ func (c *UsuariosController) Put() {
 	}
 	defer resp.Body.Close()
 
-	// Leer el cuerpo de la respuesta
+	// Leer la respuesta del backend
 	body, err := ioutil.ReadAll(resp.Body)
 	if err != nil {
+		fmt.Println("Error al leer la respuesta del backend:", err)
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Error al leer la respuesta del API CRUD",
+			"Message": "Error al leer la respuesta del backend",
 			"status":  500,
 			"success": false,
 		}
@@ -136,11 +140,12 @@ func (c *UsuariosController) Put() {
 		return
 	}
 
-	// Estructura que esperamos recibir del API CRUD (ajustarla a tu formato real)
+	// Verificar el estado de la respuesta
 	var apiResponse map[string]interface{}
 	if err := json.Unmarshal(body, &apiResponse); err != nil {
+		fmt.Println("Error al parsear la respuesta del backend:", err)
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Error al parsear la respuesta JSON",
+			"Message": "Error al parsear la respuesta del backend",
 			"status":  500,
 			"success": false,
 		}
@@ -148,22 +153,24 @@ func (c *UsuariosController) Put() {
 		return
 	}
 
-	// Verificamos si la respuesta contiene un mensaje de éxito
+	// Si la respuesta del backend es exitosa, retornamos un mensaje de éxito
 	if resp.StatusCode == 200 {
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Usuario actualizado exitosamente",
-			"status":  200,
-			"success": true,
-			"usuario": apiResponse, // Aquí puedes devolver los detalles actualizados si es necesario
+			"Message":             "Usuario actualizado correctamente",
+			"status":              200,
+			"success":             true,
+			"usuario actualizado": apiResponse, // Aquí se puede devolver la respuesta del backend
 		}
 	} else {
+		// En caso de error en el backend
 		c.Data["json"] = map[string]interface{}{
-			"Message": "Error al actualizar el usuario",
+			"Message": "Error al actualizar el usuario en el backend",
 			"status":  500,
 			"success": false,
 		}
 	}
 
+	// Servir la respuesta JSON al frontend
 	c.ServeJSON()
 }
 
