@@ -59,11 +59,11 @@ func (c *AdminController) GetOne() {
 // @router / [get]
 func (c *AdminController) GetAll() {
 
-	// Definir la URL del API CRUD (esto puede provenir de la configuración)
-	apiURL := "http://localhost:8082/v1/Usuarios" // Asegúrate de que esta URL esté bien configurada
+	// Definir la URL del API CRUD
+	apiURL := "http://localhost:8082/v1/Usuarios?limit=0"
 
 	// Realizar la solicitud GET al API CRUD
-	client := &http.Client{Timeout: 10 * time.Second} // Tiempo de espera para la solicitud
+	client := &http.Client{Timeout: 10 * time.Second}
 	req, err := http.NewRequest("GET", apiURL, nil)
 	if err != nil {
 		c.Data["json"] = map[string]interface{}{
@@ -112,7 +112,7 @@ func (c *AdminController) GetAll() {
 		return
 	}
 
-	// Extraer solo los datos de los usuarios desde la respuesta
+	// Extraer los usuarios
 	usuarios, ok := apiResponse["usuarios consultados"].([]interface{})
 	if !ok {
 		c.Data["json"] = map[string]interface{}{
@@ -127,7 +127,7 @@ func (c *AdminController) GetAll() {
 	// Crear un mapa para contar los usuarios registrados por año y mes
 	usuariosPorFecha := make(map[string]map[string]int)
 
-	// Crear una lista nueva solo con los campos necesarios (Nombre y Activo)
+	// Crear una lista nueva solo con los campos necesarios (Nombre, Activo)
 	var filteredUsuarios []map[string]interface{}
 	for _, user := range usuarios {
 		userData, ok := user.(map[string]interface{})
@@ -182,7 +182,7 @@ func (c *AdminController) GetAll() {
 	// Devolver la respuesta con los usuarios filtrados y el conteo de usuarios por año y mes
 	c.Data["json"] = map[string]interface{}{
 		"Usuarios":         filteredUsuarios,
-		"TotalUsuarios":    usuarioCount,
+		"TotalUsuarios":    usuarioCount, // Contar todos los usuarios, sin importar su rol
 		"UsuariosPorFecha": resultado,
 	}
 	c.ServeJSON()
