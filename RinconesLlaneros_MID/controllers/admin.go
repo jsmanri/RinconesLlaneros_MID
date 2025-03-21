@@ -124,6 +124,9 @@ func (c *AdminController) GetAll() {
 		return
 	}
 
+	// Crear un mapa para contar los usuarios registrados por año y mes
+	usuariosPorFecha := make(map[string]map[string]int)
+
 	// Crear una lista nueva solo con los campos necesarios (Nombre y Activo)
 	var filteredUsuarios []map[string]interface{}
 	for _, user := range usuarios {
@@ -135,11 +138,53 @@ func (c *AdminController) GetAll() {
 				"Activo": userData["Activo"],
 			}
 			filteredUsuarios = append(filteredUsuarios, filteredUser)
+
+			// Obtener la fecha de creación del usuario
+			fechaCreacion, ok := userData["FechaCreacion"].(string)
+			if ok {
+				// Parsear la fecha y extraer el año y el mes
+				fecha, err := time.Parse(time.RFC3339, fechaCreacion)
+				if err != nil {
+					// Si ocurre un error al parsear la fecha, se ignora el usuario
+					continue
+				}
+
+				// Obtener el año y el mes en formato "YYYY" y "MM"
+				anno := fecha.Format("2006")
+				mes := fecha.Format("01")
+
+				// Inicializar el mapa para ese año si aún no existe
+				if usuariosPorFecha[anno] == nil {
+					usuariosPorFecha[anno] = make(map[string]int)
+				}
+
+				// Incrementar el contador para ese mes y año
+				usuariosPorFecha[anno][mes]++
+			}
 		}
 	}
 
-	// Devolver la respuesta solo con los campos filtrados
-	c.Data["json"] = filteredUsuarios
+	// Agregar el conteo de usuarios registrados
+	usuarioCount := len(filteredUsuarios)
+
+	// Crear el resultado con los datos de los usuarios por mes y año
+	var resultado []map[string]interface{}
+	for anno, meses := range usuariosPorFecha {
+		for mes, count := range meses {
+			resultado = append(resultado, map[string]interface{}{
+				"Año":                 anno,
+				"Mes":                 mes,
+				"UsuariosRegistrados": count,
+			})
+		}
+	}
+
+	// Devolver la respuesta con los usuarios filtrados y el conteo de usuarios por año y mes
+	c.Data["json"] = map[string]interface{}{
+		"Usuarios":         filteredUsuarios,
+		"TotalUsuarios":    usuarioCount,
+		"UsuariosPorFecha": resultado,
+	}
 	c.ServeJSON()
 }
 
