@@ -127,6 +127,12 @@ func (c *AdminController) GetAll() {
 	// Crear un mapa para contar los usuarios registrados por año y mes
 	usuariosPorFecha := make(map[string]map[string]int)
 
+	// Contadores de roles
+	roleCounts := []map[string]interface{}{
+		{"Rol": "Cliente", "Count": 0},
+		{"Rol": "Vendedor", "Count": 0},
+	}
+
 	// Crear una lista nueva solo con los campos necesarios (Nombre, Activo)
 	var filteredUsuarios []map[string]interface{}
 	for _, user := range usuarios {
@@ -161,6 +167,17 @@ func (c *AdminController) GetAll() {
 				// Incrementar el contador para ese mes y año
 				usuariosPorFecha[anno][mes]++
 			}
+
+			// Obtener el Rol del usuario y contar según el ID del rol
+			if rolData, ok := userData["Rol"].(map[string]interface{}); ok {
+				if rolId, ok := rolData["Id"].(float64); ok { // El ID del Rol es un número
+					if rolId == 2 { // Cliente
+						roleCounts[0]["Count"] = roleCounts[0]["Count"].(int) + 1
+					} else if rolId == 3 { // Vendedor
+						roleCounts[1]["Count"] = roleCounts[1]["Count"].(int) + 1
+					}
+				}
+			}
 		}
 	}
 
@@ -179,11 +196,13 @@ func (c *AdminController) GetAll() {
 		}
 	}
 
-	// Devolver la respuesta con los usuarios filtrados y el conteo de usuarios por año y mes
+	// Devolver la respuesta con los usuarios filtrados, el conteo de usuarios por año y mes,
+	// y el arreglo de contadores de roles
 	c.Data["json"] = map[string]interface{}{
 		"Usuarios":         filteredUsuarios,
 		"TotalUsuarios":    usuarioCount, // Contar todos los usuarios, sin importar su rol
 		"UsuariosPorFecha": resultado,
+		"RolesCount":       roleCounts, // Arreglo con los contadores de roles
 	}
 	c.ServeJSON()
 }
