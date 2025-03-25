@@ -3,11 +3,14 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
+	"strconv"
 
 	"github.com/astaxie/beego"
 	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/models"
+	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/services"
 )
 
 // UsuariosController operations for Usuarios
@@ -152,5 +155,31 @@ func (c *UsuariosController) Put() {
 // @Failure 403 id is empty
 // @router /:id [delete]
 func (c *UsuariosController) Delete() {
+	idUsuario, err := strconv.Atoi(c.Ctx.Input.Param(":id"))
+	if err != nil {
+		c.Data["json"] = map[string]interface{}{
+			"success": false,
+			"message": "ID de usuario inválido",
+			"error":   err.Error(),
+		}
+		c.ServeJSON()
+		return
+	}
 
+	// Llamamos al servicio de autoeliminación
+	err = services.AutoEliminarUsuario(idUsuario)
+	if err != nil {
+		c.Data["json"] = map[string]interface{}{
+			"success": false,
+			"message": "Error al eliminar la cuenta",
+			"error":   err.Error(),
+		}
+	} else {
+		c.Data["json"] = map[string]interface{}{
+			"success": true,
+			"message": fmt.Sprintf("La cuenta con ID %d ha sido eliminada correctamente", idUsuario),
+		}
+	}
+
+	c.ServeJSON()
 }
