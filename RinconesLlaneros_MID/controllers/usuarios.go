@@ -11,6 +11,7 @@ import (
 
 	"github.com/astaxie/beego"
 	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/models"
+	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/services"
 )
 
 // UsuariosController operations for Usuarios
@@ -186,11 +187,9 @@ func (c *UsuariosController) Put() {
 // @Failure 403 body is empty
 // @router /cambiar-contrasena/:id [put]
 func (c *UsuariosController) PutContraseña() {
-	// Obtener el ID del usuario desde la URL
 	idStr := c.Ctx.Input.Param(":id")
 	id, _ := strconv.Atoi(idStr)
 
-	// Definir la estructura de la solicitud para la contraseña
 	var v models.CambioContraseña
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &v); err != nil {
 		c.Data["json"] = map[string]interface{}{"success": false, "message": "Datos inválidos"}
@@ -198,42 +197,33 @@ func (c *UsuariosController) PutContraseña() {
 		return
 	}
 
-	// Buscar el usuario por ID en la base de datos
-	usuario, err := models.GetUsuariosById(id)
-	if err != nil {
+	usuario, err := services.ObtenerUsuarioPorID(id)
+	if err != nil || usuario == nil {
 		c.Data["json"] = map[string]interface{}{"success": false, "message": "Usuario no encontrado"}
 		c.ServeJSON()
 		return
 	}
 
-	// Verificar que la contraseña actual proporcionada coincida con la almacenada
-	// Aquí puedes usar una función como bcrypt.CompareHashAndPassword para hacer la comparación
-	if usuario.Contrasena != v.ContrasenaActual {
-		c.Data["json"] = map[string]interface{}{"success": false, "message": "Contraseña actual incorrecta"}
-		c.ServeJSON()
-		return
-	}
-
-	// Hashear la nueva contraseña antes de guardarla
-	hashedPassword, err := models.HashearContraseña(v.ContrasenaNueva)
+	codigo := services.GenerarCodigo()
+	err = services.GuardarCodigoEnDB(id, codigo)
 	if err != nil {
-		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al hashear la nueva contraseña"}
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al guardar el código"}
 		c.ServeJSON()
 		return
 	}
 
-	// Actualizar la contraseña del usuario en la base de datos
-	usuario.Contrasena = hashedPassword
-	if err := models.UpdateUsuariosById(usuario); err != nil {
-		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al actualizar la contraseña"}
+	// Aquí desreferenciamos el puntero para acceder a los valores
+	err = services.EnviarCodigoPorCorreo(codigo, (*usuario)["Correo"].(string))
+	if err != nil {
+		c.Data["json"] = map[string]interface{}{"success": false, "message": "Error al enviar código"}
 		c.ServeJSON()
 		return
 	}
 
-	// Responder con éxito
-	c.Data["json"] = map[string]interface{}{"success": true, "message": "Contraseña cambiada correctamente"}
+	c.Data["json"] = map[string]interface{}{"success": true, "message": "Código enviado al correo"}
 	c.ServeJSON()
 }
+
 
 // Delete ...
 // @Title Delete
