@@ -16,7 +16,7 @@ import (
 func init() {
 	// Ruta para la actualización de un usuario
 	beego.Router("/v1/Usuarios/:id", &controllers.UsuariosController{}, "put:Put")
-	beego.Router("/usuarios/:id/cambiarcontrasena", &controllers.UsuariosController{}, "put:PutContraseña")
-	beego.Router("/usuarios/:id/verificarcodigo", &controllers.UsuariosController{}, "put:VerificarCodigoYActualizar")
+	beego.Router("/v1/Usuarios/recuperar_password", &controllers.TokenController{}, "post:GenerarToken")
+	beego.Router("/v1/Usuarios/cambiar_password:id", &controllers.UsuariosController{}, "put:PutContraseña")
 }
 
