@@ -15,6 +15,5 @@ import (
 
 func init() {
 	beego.Router("/v1/Usuarios", &controllers.UsuariosController{}, "post:Post")
-    beego.Router("/v1/admin/usuarios/:id", &controllers.Usuarios_adminController{}, "delete:Delete")
-	beego.Router("/v1/usuarios/:id", &controllers.UsuariosController{}, "delete:Delete")
+	beego.Router("/admin/usuarios/:id", &controllers.UsuariosController{}, "delete:DeleteUsuario")
 }

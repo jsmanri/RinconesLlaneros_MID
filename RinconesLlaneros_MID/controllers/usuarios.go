@@ -3,14 +3,12 @@ package controllers
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"io/ioutil"
 	"net/http"
 	"strconv"
 
 	"github.com/astaxie/beego"
 	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/models"
-	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/services"
 )
 
 // UsuariosController operations for Usuarios
@@ -154,32 +152,75 @@ func (c *UsuariosController) Put() {
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
-func (c *UsuariosController) Delete() {
-	idUsuario, err := strconv.Atoi(c.Ctx.Input.Param(":id"))
+func (c *UsuariosController) DeleteUsuario() {
+	idStr := c.Ctx.Input.Param(":id")
+	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		c.Data["json"] = map[string]interface{}{
 			"success": false,
-			"message": "ID de usuario inválido",
-			"error":   err.Error(),
+			"status":  400,
+			"message": "ID inválido",
 		}
 		c.ServeJSON()
 		return
 	}
 
-	// Llamamos al servicio de autoeliminación
-	err = services.AutoEliminarUsuario(idUsuario)
+	// Obtener los sitios turísticos del usuario antes de eliminar
+	sitios, err := models.ObtenerSitiosPorUsuario(id)
 	if err != nil {
 		c.Data["json"] = map[string]interface{}{
 			"success": false,
-			"message": "Error al eliminar la cuenta",
-			"error":   err.Error(),
+			"status":  500,
+			"message": "Error al obtener los sitios turísticos del usuario",
 		}
-	} else {
-		c.Data["json"] = map[string]interface{}{
-			"success": true,
-			"message": fmt.Sprintf("La cuenta con ID %d ha sido eliminada correctamente", idUsuario),
-		}
+		c.ServeJSON()
+		return
 	}
 
-	c.ServeJSON()
+	// Si el usuario tiene sitios registrados, mostrar mensaje antes de eliminar
+	if len(sitios) > 0 {
+		c.Data["json"] = map[string]interface{}{
+			"success": true,
+			"status":  200,
+			"message": "El usuario tiene sitios registrados. ¿Desea continuar con la eliminación?",
+			"sitios":  sitios,
+		}
+		c.ServeJSON()
+		return
+	}
+
+	// Realizar el borrado lógico en el CRUD local
+	updateData := map[string]interface{}{
+		"activo": false,
+	}
+	jsonData, _ := json.Marshal(updateData)
+
+	resp, err := http.Post("localhost:8081/v1/Usuarios"+idStr, "application/json", bytes.NewBuffer(jsonData))
+	if err != nil {
+		c.Ctx.Output.SetStatus(500)
+		c.Data["json"] = map[string]interface{}{
+			"success": false,
+			"status":  500,
+			"message": "Error al comunicarse con el CRUD local: " + err.Error(),
+		}
+		c.ServeJSON()
+		return
+	}
+	defer resp.Body.Close()
+
+	// Leer la respuesta del CRUD y devolverla tal cual
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		c.Ctx.Output.SetStatus(500)
+		c.Data["json"] = map[string]interface{}{
+			"success": false,
+			"status":  500,
+			"message": "Error al leer la respuesta del CRUD: " + err.Error(),
+		}
+		c.ServeJSON()
+		return
+	}
+
+	c.Ctx.Output.SetStatus(resp.StatusCode)
+	c.Ctx.Output.Body(body)
 }
