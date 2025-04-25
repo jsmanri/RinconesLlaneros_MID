@@ -171,9 +171,9 @@ func (c *AdminController) GetAll() {
 			// Obtener el Rol del usuario y contar según el ID del rol
 			if rolData, ok := userData["Rol"].(map[string]interface{}); ok {
 				if rolId, ok := rolData["Id"].(float64); ok { // El ID del Rol es un número
-					if rolId == 2 { // Cliente
+					if rolId == 1 { // Cliente
 						roleCounts[0]["Count"] = roleCounts[0]["Count"].(int) + 1
-					} else if rolId == 3 { // Vendedor
+					} else if rolId == 2 { // Vendedor
 						roleCounts[1]["Count"] = roleCounts[1]["Count"].(int) + 1
 					}
 				}
