@@ -14,6 +14,13 @@ import (
 )
 
 func init() {
-	beego.Router("/v1/Usuarios", &controllers.UsuariosController{}, "post:Post")
-	beego.Router("/admin/usuarios/:id", &controllers.UsuariosController{}, "delete:DeleteUsuario")
+	ns := beego.NewNamespace("/v1",
+		// Rutas para el controlador de sensores
+		beego.NSNamespace("/Usuarios",
+			beego.NSInclude(
+				&controllers.UsuariosController{},
+			),
+		),
+	)
+	beego.AddNamespace(ns)
 }
