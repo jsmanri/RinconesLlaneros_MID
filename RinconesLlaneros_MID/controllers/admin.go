@@ -135,15 +135,16 @@ func (c *AdminController) GetAll() {
 
 	// Crear una lista nueva solo con los campos necesarios (Nombre, Activo)
 	var filteredUsuarios []map[string]interface{}
-	for _, user := range usuarios {
-		userData, ok := user.(map[string]interface{})
-		if ok {
-			// Crear un mapa con solo los campos "Nombre" y "Activo"
-			filteredUser := map[string]interface{}{
-				"Nombre": userData["Nombre"],
-				"Activo": userData["Activo"],
-			}
-			filteredUsuarios = append(filteredUsuarios, filteredUser)
+    for _, user := range usuarios {
+	userData, ok := user.(map[string]interface{})
+	    if ok {
+		// Agrega también el ID del usuario
+		filteredUser := map[string]interface{}{
+			"Id":     userData["Id"],
+			"Nombre": userData["Nombre"],
+			"Activo": userData["Activo"],
+		}
+		filteredUsuarios = append(filteredUsuarios, filteredUser)
 
 			// Obtener la fecha de creación del usuario
 			fechaCreacion, ok := userData["FechaCreacion"].(string)
@@ -171,9 +172,9 @@ func (c *AdminController) GetAll() {
 			// Obtener el Rol del usuario y contar según el ID del rol
 			if rolData, ok := userData["Rol"].(map[string]interface{}); ok {
 				if rolId, ok := rolData["Id"].(float64); ok { // El ID del Rol es un número
-					if rolId == 1 { // Cliente
+					if rolId == 2 { // Cliente
 						roleCounts[0]["Count"] = roleCounts[0]["Count"].(int) + 1
-					} else if rolId == 2 { // Vendedor
+					} else if rolId == 3 { // Vendedor
 						roleCounts[1]["Count"] = roleCounts[1]["Count"].(int) + 1
 					}
 				}
