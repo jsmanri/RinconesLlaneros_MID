@@ -4,7 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"strconv"
@@ -36,7 +36,6 @@ func (c *UsuariosController) URLMapping() {
 // @Failure 500 Internal Server Error
 // @router / [post]
 // API_CRUD_Usuarios es la URL base de la API CRUD de usuarios.
-
 // API_CRUD_Usuarios es la URL base de la API CRUD.
 var API_CRUD_Usuarios string
 
@@ -48,133 +47,151 @@ func init() {
 	log.Printf("API_CRUD_Usuarios: %s", API_CRUD_Usuarios)
 }
 
+// Post maneja la creación de un nuevo usuario.
 func (c *UsuariosController) Post() {
-	bodyBytes := c.Ctx.Input.RequestBody
-
-	if len(bodyBytes) == 0 {
-		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 400, "message": "Cuerpo de la solicitud vacío"}
-		c.ServeJSON()
-		return
-	}
-
 	var jsonData map[string]interface{}
-	if err := json.Unmarshal(bodyBytes, &jsonData); err != nil {
-		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 400, "message": "JSON inválido: " + err.Error()}
-		c.ServeJSON()
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &jsonData); err != nil {
+		c.respond(400, "JSON inválido: "+err.Error())
 		return
 	}
 
-	if err := ValidateRequiredFields(jsonData, []string{"Nombre", "Correo", "Cedula", "Rol", "Contraseña"}); err != nil {
-		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 400, "message": "Faltan campos: " + err.Error()}
-		c.ServeJSON()
+	// Validación de los campos requeridos
+	if err := ValidateRequiredFields(jsonData, []string{"Nombre", "Correo", "Cedula", "Rol", "IdCredencialesCredenciales"}); err != nil {
+		c.respond(400, "Faltan campos: "+err.Error())
 		return
 	}
 
-	credencialesID, err := c.PostCredenciales(jsonData)
-	if err != nil {
-		c.Ctx.Output.SetStatus(500)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 500, "message": "Error credenciales: " + err.Error()}
-		c.ServeJSON()
+	// Validar que "Rol" y "IdCredencialesCredenciales" contienen un ID válido
+	rol, ok := jsonData["Rol"].(map[string]interface{})
+	if !ok || rol["Id"] == nil {
+		c.respond(400, "Rol o Id del rol no válido")
 		return
 	}
+	rolID := int(rol["Id"].(float64))
 
-	var rolID int
-	if rolNombre, ok := jsonData["Rol"].(string); ok {
-		rolID, err = GetRolIDFromCRUD(rolNombre)
-		if err != nil {
-			c.Ctx.Output.SetStatus(500)
-			c.Data["json"] = map[string]interface{}{"success": false, "status": 500, "message": "Error Rol: " + err.Error()}
-			c.ServeJSON()
-			return
-		}
-	} else {
-		c.Ctx.Output.SetStatus(400)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 400, "message": "Rol inválido"}
-		c.ServeJSON()
+	credenciales, ok := jsonData["IdCredencialesCredenciales"].(map[string]interface{})
+	if !ok || credenciales["Id"] == nil {
+		c.respond(400, "Credenciales o Id de credenciales no válido")
 		return
 	}
+	credencialesID := int(credenciales["Id"].(float64))
 
+	// Verificar los demás campos
+	nombre := jsonData["Nombre"].(string)
+	correo := jsonData["Correo"].(string)
+	cedula := jsonData["Cedula"].(string)
+	numeroTelefono := jsonData["NumeroTelefono"].(string)
+	fotoPerfil := jsonData["FotoPerfil"].(string)
+
+	// Crear el nuevo usuario
 	nuevoUsuario := map[string]interface{}{
 		"IdCredencialesCredenciales": map[string]interface{}{"Id": credencialesID},
-		"Rol":                         map[string]interface{}{"Id": rolID},
-		"Nombre":                      jsonData["Nombre"],
-		"Correo":                      jsonData["Correo"],
-		"Cedula":                      jsonData["Cedula"],
-		"NumeroTelefono":              jsonData["NumeroTelefono"],
-		"FotoPerfil":                  jsonData["FotoPerfil"],
-		"Activo":                      true,
+		"Rol":                        map[string]interface{}{"Id": rolID},
+		"Nombre":                     nombre,
+		"Correo":                     correo,
+		"Cedula":                     cedula,
+		"NumeroTelefono":             numeroTelefono,
+		"FotoPerfil":                 fotoPerfil,
+		"Activo":                     true,
 	}
 
-	usuarioID, err := c.AddUsuarioToCRUD(nuevoUsuario)
+	// Llamar a la función para agregar el usuario a CRUD
+	usuarioID, err := c.addToCRUD("/usuarios", nuevoUsuario)
 	if err != nil {
-		c.Ctx.Output.SetStatus(500)
-		c.Data["json"] = map[string]interface{}{"success": false, "status": 500, "message": "Error al crear usuario: " + err.Error()}
-		c.ServeJSON()
+		c.respond(500, "Error creando usuario: "+err.Error())
 		return
 	}
 
-	c.Ctx.Output.SetStatus(201)
-	c.Data["json"] = map[string]interface{}{"success": true, "status": 201, "message": "Usuario creado", "id": usuarioID}
-	c.ServeJSON()
+	c.respondWithID(201, "Usuario creado", usuarioID)
 }
 
-func (c *UsuariosController) PostCredenciales(jsonData map[string]interface{}) (int, error) {
-	password, ok := jsonData["Contraseña"].(string)
-	if !ok {
-		return 0, fmt.Errorf("contraseña inválida o ausente")
-	}
-	correo, ok := jsonData["Correo"].(string)
-	if !ok {
-		return 0, fmt.Errorf("correo inválido o ausente")
-	}
+// createCredenciales maneja la creación de credenciales.
+func (c *UsuariosController) createCredenciales(data map[string]interface{}) (int, error) {
+	password := data["Contraseña"].(string)
+	correo := data["Correo"].(string)
 
 	hashedPassword, err := services.HashContraseña(password)
 	if err != nil {
-		return 0, fmt.Errorf("error al hashear contraseña: %v", err)
+		return 0, fmt.Errorf("error hash contraseña: %v", err)
 	}
+
 	credenciales := map[string]interface{}{
 		"Contraseña": hashedPassword,
 		"Activo":     true,
 	}
 
-	credencialesID, err := c.AddCredencialesToCRUD(credenciales)
+	id, err := c.addToCRUD("/credenciales", credenciales)
 	if err != nil {
-		return 0, fmt.Errorf("error al guardar credenciales: %v", err)
+		return 0, err
 	}
 
-	token := "verificacion_" + strconv.Itoa(credencialesID)
-	if err := services.EnviarCorreo(correo, token); err != nil {
-		log.Printf("Error al enviar correo: %v", err)
-	}
+	// Enviar correo de verificación en segundo plano
+	go func() {
+		token := "verificacion_" + strconv.Itoa(id)
+		if err := services.EnviarCorreo(correo, token); err != nil {
+			log.Printf("Error enviando correo de verificación: %v", err)
+		}
+	}()
 
-	return credencialesID, nil
+	return id, nil
 }
 
-func GetRolIDFromCRUD(rolNombre string) (int, error) {
-	url := fmt.Sprintf("%s/roles?query=Nombre:%s", API_CRUD_Usuarios, rolNombre)
-	log.Printf("URL RolID: %s", url)
-
-	resp, err := http.Get(url)
+// addToCRUD envía un objeto al CRUD y devuelve el ID creado.
+func (c *UsuariosController) addToCRUD(endpoint string, data map[string]interface{}) (int, error) {
+	payload, err := json.Marshal(data)
 	if err != nil {
-		return 0, fmt.Errorf("error conexión API CRUD: %v", err)
+		return 0, fmt.Errorf("error serializando JSON: %v", err)
+	}
+
+	resp, err := http.Post(API_CRUD_Usuarios+endpoint, "application/json", bytes.NewBuffer(payload))
+	if err != nil {
+		return 0, fmt.Errorf("error enviando petición: %v", err)
 	}
 	defer resp.Body.Close()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return 0, fmt.Errorf("error leyendo respuesta API: %v", err)
+		return 0, fmt.Errorf("error leyendo respuesta: %v", err)
+	}
+
+	if resp.StatusCode != http.StatusCreated {
+		return 0, fmt.Errorf("error API (%d): %s", resp.StatusCode, string(body))
+	}
+
+	var res map[string]interface{}
+	if err := json.Unmarshal(body, &res); err != nil {
+		return 0, fmt.Errorf("error deserializando respuesta: %v", err)
+	}
+
+	idFloat, ok := res["Id"].(float64)
+	if !ok {
+		return 0, fmt.Errorf("Id inválido en respuesta")
+	}
+
+	return int(idFloat), nil
+}
+
+// GetRolIDFromCRUD obtiene el ID de un rol desde el CRUD.
+func GetRolIDFromCRUD(rolNombre string) (int, error) {
+	url := fmt.Sprintf("%s/roles?query=Nombre:%s", API_CRUD_Usuarios, rolNombre)
+	resp, err := http.Get(url)
+	if err != nil {
+		return 0, fmt.Errorf("error conexión API: %v", err)
+	}
+	defer resp.Body.Close()
+
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return 0, fmt.Errorf("error leyendo respuesta: %v", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		return 0, fmt.Errorf("API CRUD error (%d): %s", resp.StatusCode, string(body))
+		return 0, fmt.Errorf("error API (%d): %s", resp.StatusCode, string(body))
 	}
 
 	var roles []map[string]interface{}
 	if err := json.Unmarshal(body, &roles); err != nil {
-		return 0, fmt.Errorf("error deserializando respuesta: %v", err)
+		return 0, fmt.Errorf("error deserializando roles: %v", err)
 	}
 
 	if len(roles) == 0 {
@@ -183,99 +200,35 @@ func GetRolIDFromCRUD(rolNombre string) (int, error) {
 
 	idFloat, ok := roles[0]["Id"].(float64)
 	if !ok {
-		return 0, fmt.Errorf("Id de rol no es numérico")
+		return 0, fmt.Errorf("Id de rol inválido")
 	}
 
 	return int(idFloat), nil
 }
 
+// ValidateRequiredFields verifica que existan campos requeridos.
 func ValidateRequiredFields(data map[string]interface{}, fields []string) error {
 	for _, field := range fields {
 		if _, ok := data[field]; !ok {
-			return fmt.Errorf("%s", field)
+			return fmt.Errorf("campo faltante: %s", field)
 		}
 	}
 	return nil
 }
 
-func (c *UsuariosController) AddUsuarioToCRUD(usuario map[string]interface{}) (int, error) {
-	usuarioJSON, err := json.Marshal(usuario)
-	if err != nil {
-		return 0, fmt.Errorf("error serializando usuario: %v", err)
-	}
-
-	resp, err := services.Metodo_post(API_CRUD_Usuarios, "/usuarios", usuarioJSON)
-	if err != nil {
-		return 0, fmt.Errorf("error petición API: %v", err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusCreated {
-		body, _ := io.ReadAll(resp.Body)
-		return 0, fmt.Errorf("error API (%d): %s", resp.StatusCode, string(body))
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, fmt.Errorf("error leyendo respuesta: %v", err)
-	}
-
-	var res map[string]interface{}
-	if err := json.Unmarshal(body, &res); err != nil {
-		return 0, fmt.Errorf("error deserializando respuesta: %v", err)
-	}
-
-	idFloat, ok := res["Id"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("Id inválido")
-	}
-
-	return int(idFloat), nil
+// respond responde con un mensaje simple.
+func (c *UsuariosController) respond(status int, message string) {
+	c.Ctx.Output.SetStatus(status)
+	c.Data["json"] = map[string]interface{}{"success": status < 400, "status": status, "message": message}
+	c.ServeJSON()
 }
 
-func (c *UsuariosController) AddCredencialesToCRUD(credenciales map[string]interface{}) (int, error) {
-	credencialesJSON, err := json.Marshal(credenciales)
-	if err != nil {
-		return 0, fmt.Errorf("error serializando credenciales: %v", err)
-	}
-
-	req, err := http.NewRequest("POST", fmt.Sprintf("%s/credenciales", API_CRUD_Usuarios), bytes.NewBuffer(credencialesJSON))
-	if err != nil {
-		return 0, fmt.Errorf("error creando petición: %v", err)
-	}
-	req.Header.Set("Content-Type", "application/json")
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return 0, fmt.Errorf("error ejecutando petición: %v", err)
-	}
-	defer resp.Body.Close()
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return 0, fmt.Errorf("error leyendo respuesta: %v", err)
-	}
-
-	if resp.StatusCode != http.StatusCreated {
-		return 0, fmt.Errorf("error API (%d): %s", resp.StatusCode, string(body))
-	}
-
-	var res map[string]interface{}
-	if err := json.Unmarshal(body, &res); err != nil {
-		return 0, fmt.Errorf("error deserializando respuesta: %v", err)
-	}
-
-	idFloat, ok := res["Id"].(float64)
-	if !ok {
-		return 0, fmt.Errorf("Id inválido")
-	}
-
-	return int(idFloat), nil
+// respondWithID responde con un mensaje y un ID.
+func (c *UsuariosController) respondWithID(status int, message string, id int) {
+	c.Ctx.Output.SetStatus(status)
+	c.Data["json"] = map[string]interface{}{"success": true, "status": status, "message": message, "id": id}
+	c.ServeJSON()
 }
-
-
-
 // GetOne ...
 // @Title GetOne
 // @Description get Usuarios by id
