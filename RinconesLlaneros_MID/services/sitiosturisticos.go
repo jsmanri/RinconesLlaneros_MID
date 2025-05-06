@@ -66,3 +66,71 @@ func ConvertInterfaceToSliceMap(input interface{}) ([]map[string]interface{}, er
 
 	return result, nil
 }
+
+func ConvertToSliceOfMaps(input interface{}) ([]map[string]interface{}, error) {
+	// Afirmar que el input es un slice de interfaces
+	rawSlice, ok := input.([]interface{})
+	if !ok {
+		return nil, fmt.Errorf("input is not a slice")
+	}
+
+	// Crear el slice de map[string]interface{}
+	result := make([]map[string]interface{}, len(rawSlice))
+
+	for i, item := range rawSlice {
+		// Intentar convertir cada elemento a map[string]interface{}
+		elem, ok := item.(map[string]interface{})
+		if !ok {
+			return nil, fmt.Errorf("element at index %d is not a map[string]interface{}", i)
+		}
+		result[i] = elem
+	}
+
+	return result, nil
+
+}
+func GroupByID(items []map[string]interface{}) map[interface{}][]map[string]interface{} {
+    grouped := make(map[interface{}][]map[string]interface{})
+
+    for i, item := range items {
+		sitioturistico := items[i]["IdSitiosTuristicos"]
+		idsitio := sitioturistico.(map[string]interface{})["Id"]
+        id := idsitio
+        grouped[id] = append(grouped[id], item)
+    }
+
+    return grouped
+}
+
+func PromedioNumeros(data []interface{}) float64 {
+    var suma float64
+    var cantidad int
+
+    for _, v := range data {
+        switch num := v.(type) {
+        case int:
+            suma += float64(num)
+            cantidad++
+        case float64:
+            suma += num
+            cantidad++
+        case float32:
+            suma += float64(num)
+            cantidad++
+        case int64:
+            suma += float64(num)
+            cantidad++
+        case int32:
+            suma += float64(num)
+            cantidad++
+        default:
+            // Ignorar tipos no numéricos
+        }
+    }
+
+    if cantidad == 0 {
+        return 0 // evitar división por cero
+    }
+
+    return suma / float64(cantidad)
+}

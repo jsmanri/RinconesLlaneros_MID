@@ -16,7 +16,7 @@ import (
 func init() {
 	ns := beego.NewNamespace("/v1",
 		// Rutas para el controlador de sensores
-		beego.NSNamespace("/sitios_turisticos",
+		beego.NSNamespace("/Sitios_turisticos",
 			beego.NSInclude(
 				&controllers.Sitios_turisticosController{},
 			),

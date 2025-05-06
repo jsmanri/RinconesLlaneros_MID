@@ -2,7 +2,7 @@ package controllers
 
 import (
 	"fmt"
-	"sort"
+	"reflect"
 	"strconv"
 
 	"github.com/astaxie/beego"
@@ -59,177 +59,95 @@ func (c *Sitios_turisticosController) GetOne() {
 // @Success 200 {object} models.Sitios_turisticos
 // @Failure 403
 // @router / [get]
-
 func (c *Sitios_turisticosController) GetAll() {
-    // Obtener JSON de sitios turísticos
-    jsonSitiosStr, err := services.Metodo_get_all("host_api", "Sitios_Turisticos")
-    if err != nil {
-        c.CustomAbort(500, "Error al obtener los sitios turísticos desde el CRUD")
-        return
-    }
 
-    // Procesar el JSON de sitios turísticos
-    jsonSitios, err := services.ProcesarJson(jsonSitiosStr)
-    if err != nil {
-        c.CustomAbort(500, "Error al procesar el JSON de sitios turísticos")
-        return
-    }
+	// Obtener JSON de comentarios en una sola consulta
+	jsonComentariosStr, err := services.Metodo_get_all("host_api", "Comentarios?limit=0")
+	if err != nil {
+		fmt.Println("Error al obtener comentarios desde el CRUD:", err)
+		c.CustomAbort(500, "Error al obtener los comentarios desde el CRUD")
+		return
+	}
 
-    // Verificar si "sitios consultados" existe y tiene datos
-    sitiosDataInterface, ok := jsonSitios["sitios consultados"]
-    if !ok || sitiosDataInterface == nil {
-        c.CustomAbort(500, "Error: No se encontraron sitios turísticos")
-        return
-    }
+	// Procesar el JSON de comentarios
+	jsonComentarios, err := services.ProcesarJson(jsonComentariosStr)
+	if err != nil {
+		fmt.Println("Error al procesar los comentarios:", err)
+		c.CustomAbort(500, "Error al procesar el JSON de comentarios")
+		return
+	}
 
-    // Convertir a slice de interfaces
-    sitiosData, ok := sitiosDataInterface.([]interface{})
-    if !ok {
-        c.CustomAbort(500, "Error: Formato incorrecto de sitios turísticos en el JSON")
-        return
-    }
+	resultados_parcial := jsonComentarios["comentarios consultados"]
 
-    // Obtener JSON de comentarios en una sola consulta
-    jsonComentariosStr, err := services.Metodo_get_all("host_api", "Comentarios")
-    if err != nil {
-        fmt.Println("Error al obtener comentarios desde el CRUD:", err)
-        c.CustomAbort(500, "Error al obtener los comentarios desde el CRUD")
-        return
-    }
+	Arreglo_comentarios, _ := services.ConvertToSliceOfMaps(resultados_parcial)
 
-    // Procesar el JSON de comentarios
-    jsonComentarios, err := services.ProcesarJson(jsonComentariosStr)
-    if err != nil {
-        fmt.Println("Error al procesar los comentarios:", err)
-        c.CustomAbort(500, "Error al procesar el JSON de comentarios")
-        return
-    }
+	groupedItems := services.GroupByID(Arreglo_comentarios)
 
-    // Verificar si existen comentarios en la API
-    comentariosDataInterface, ok := jsonComentarios["comentarios consultados"]
-    if !ok || comentariosDataInterface == nil {
-        fmt.Println("Advertencia: 'comentarios consultados' no tiene datos. Asignando array vacío.")
-        comentariosDataInterface = []interface{}{} // Evita errores si la API devuelve null
-    }
+	var resultado_final []map[string]interface{}
 
-    // Convertir a slice de interfaces
-    comentariosData, ok := comentariosDataInterface.([]interface{})
-    if !ok {
-        c.CustomAbort(500, "Error: Formato incorrecto de comentarios en el JSON")
-        return
-    }
+	for idsitio, grupositios := range groupedItems {
+		idstring_sitio := fmt.Sprintf("%v", idsitio)
+		url := "Sitios_Turisticos/" + idstring_sitio
+		sitio, err := services.Metodo_get_all("host_api", url)
+		if err != nil {
+			fmt.Println("Error al obtener comentarios desde el CRUD:", err)
+			c.CustomAbort(500, "Error al obtener los comentarios desde el CRUD")
+			return
 
-    // Preparar el resultado final
-    var resultadoTotal []map[string]interface{}
+		}
+		jsonsitio, err := services.ProcesarJson(sitio)
+		if err != nil {
+			fmt.Println("Error al procesar los comentarios:", err)
+			c.CustomAbort(500, "Error al procesar el JSON de comentarios")
+			return
+		}
 
-    // Recorremos cada sitio turístico
-    for _, sitio := range sitiosData {
-        sitioMap, ok := sitio.(map[string]interface{})
-        if !ok {
-            continue
-        }
+		jsonsitio_resumido := map[string]interface{}{
+			"Nombre":      jsonsitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
+			"Descripcion": jsonsitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
+			"Fotositio":   jsonsitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
+		}
 
-        // Obtener ID del sitio turístico
-        idSitioInterface, ok := sitioMap["Id"]
-        if !ok || idSitioInterface == nil {
-            continue
-        }
+		fmt.Printf("ID %v:\n", idsitio)
+		var ponderacion interface{}
+		var ponderacion_total []interface{}
+		for _, comentario := range grupositios {
+			fmt.Printf("  %v\n", comentario)
+			fmt.Println("Cantidad comentarios", len(grupositios))
 
-        idSitio := fmt.Sprintf("%v", idSitioInterface) // Convertir a string
 
-        // Variables para acumular la información de los comentarios
-        var sumaPuntuaciones float64
-        var cantidadComentarios int
+			ponderacion = comentario["Calificacion"]
+			fmt.Println("Ponderacion", ponderacion)
+			ponderacion_total = append(ponderacion_total, ponderacion)
+		}
 
-        // Filtrar los comentarios por ID de sitio turístico
-        for _, comentario := range comentariosData {
-            comentarioMap, ok := comentario.(map[string]interface{})
-            if !ok {
-                continue
-            }
+		fmt.Println("Ponderacion total arreglo", ponderacion_total)
+		var suma float64
+		for _, ponderacion := range ponderacion_total {
+			fmt.Println("tipo dato", reflect.TypeOf(ponderacion))
+			fmt.Println("Ponderacion for ", ponderacion)
+			ponderacion_int, _ := strconv.Atoi(ponderacion.(string))
+			suma += float64(ponderacion_int)
+		}
+		total_ponderacion := suma/float64(len(ponderacion_total))
 
-            // Obtener el ID del sitio turístico asociado al comentario
-            idSitioComentarioInterface, existe := comentarioMap["IdSitiosTuristicos"]
-            if !existe || idSitioComentarioInterface == nil {
-                continue
-            }
+		fmt.Println("Ponderacion media", suma)
+		fmt.Println("Ponderacion total", total_ponderacion)
 
-            // Extraer correctamente el ID
-            idSitioComentarioMap, ok := idSitioComentarioInterface.(map[string]interface{})
-            if !ok {
-                continue
-            }
+		jsonsitio_resumido["Ponderacion"] = total_ponderacion
+		jsonsitio_resumido["Cantidad_comentarios"] = len(grupositios)
 
-            idSitioComentario, ok := idSitioComentarioMap["Id"]
-            if !ok {
-                continue
-            }
+		resultado_final = append(resultado_final, jsonsitio_resumido)
+	}
+	c.Data["json"] = map[string]interface{}{
+		"status":    200,
+		"message":   "Consulta realizada correctamente",
+		"resultado": resultado_final,
+	}
 
-            // Convertir ambos IDs a string antes de comparar
-            if fmt.Sprintf("%v", idSitioComentario) == idSitio {
-                // Obtener la calificación y validarla antes de sumarla
-                calificacionStr, ok := comentarioMap["Calificacion"].(string)
-                if ok {
-                    calificacionFloat, err := strconv.ParseFloat(calificacionStr, 64)
-                    if err == nil && calificacionFloat > 0 { // Solo incluir valores válidos
-                        sumaPuntuaciones += calificacionFloat
-                        cantidadComentarios++
-
-                        // Depuración: Mostrar calificación válida procesada
-                        fmt.Printf("Calificación procesada para sitio %s: %v\n", idSitio, calificacionFloat)
-                    } else {
-                        fmt.Printf("Advertencia: Calificación inválida para sitio ID %v\n", idSitio)
-                    }
-                }
-            }
-        }
-
-        // **Calcular la media de puntuación con valores seguros**
-        var mediaPuntuacion float64
-        if cantidadComentarios > 0 {
-            mediaPuntuacion = sumaPuntuaciones / float64(cantidadComentarios)
-        } else {
-            mediaPuntuacion = 0.0 // Evitar valores incorrectos si no hay comentarios
-        }
-
-        // Crear el resultado parcial para el sitio turístico
-        resultadoParcial := map[string]interface{}{
-            "Id":                        sitioMap["Id"],
-            "NombreSitioTuristico":      sitioMap["NombreSitioTuristico"],
-            "DescripcionSitioTuristico": sitioMap["DescripcionSitioTuristico"],
-            "Ubicacion":                 sitioMap["Ubicacion"],
-            "Horario":                   sitioMap["Horario"],
-            "Dueño":                     sitioMap["IdUsuario"].(map[string]interface{})["Nombre"],
-            "Categoria":                 sitioMap["IdCategoria"].(map[string]interface{})["Nombre"],
-            "FotoSitio":                 sitioMap["FotoSitio"],
-            "Comentarios": map[string]interface{}{
-                "Cantidad":        cantidadComentarios,
-                "MediaPuntuacion": mediaPuntuacion,
-            },
-        }
-
-        // Agregar el resultado parcial al resultado total
-        resultadoTotal = append(resultadoTotal, resultadoParcial)
-    }
-
-    // **Ordenar los sitios turísticos según la media de puntuación**
-    sort.Slice(resultadoTotal, func(i, j int) bool {
-        return resultadoTotal[i]["Comentarios"].(map[string]interface{})["MediaPuntuacion"].(float64) >
-            resultadoTotal[j]["Comentarios"].(map[string]interface{})["MediaPuntuacion"].(float64)
-    })
-
-    // **Ya no se limita el número de sitios, el cliente decide cuántos mostrar**
-
-    // Enviar la respuesta final
-    c.Data["json"] = map[string]interface{}{
-        "success":   len(resultadoTotal) > 0,
-        "status":    200,
-        "message":   "Consulta realizada correctamente",
-        "resultado": resultadoTotal,
-    }
-
-    c.ServeJSON()
+	c.ServeJSON()
 }
+
 // Put ...
 // @Title Put
 // @Description update the Sitios_turisticos
