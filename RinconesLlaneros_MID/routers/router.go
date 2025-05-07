@@ -21,7 +21,11 @@ func init() {
 				&controllers.Sitios_turisticosController{},
 			),
 		),
+		beego.NSNamespace("/Tendencias",
+		beego.NSInclude(
+			&controllers.TendenciasController{},
+		),
+	),
 	)
-
 	beego.AddNamespace(ns)
 }

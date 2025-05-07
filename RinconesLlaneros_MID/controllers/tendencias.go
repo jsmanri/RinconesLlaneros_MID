@@ -3,20 +3,19 @@ package controllers
 import (
 	"fmt"
 	"reflect"
-	"sort"
 	"strconv"
 
 	"github.com/astaxie/beego"
 	"github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/services"
 )
 
-// Sitios_turisticosController operations for Sitios_turisticos
-type Sitios_turisticosController struct {
+// TendenciasController operations for Tendencias
+type TendenciasController struct {
 	beego.Controller
 }
 
 // URLMapping ...
-func (c *Sitios_turisticosController) URLMapping() {
+func (c *TendenciasController) URLMapping() {
 	c.Mapping("Post", c.Post)
 	c.Mapping("GetOne", c.GetOne)
 	c.Mapping("GetAll", c.GetAll)
@@ -26,41 +25,39 @@ func (c *Sitios_turisticosController) URLMapping() {
 
 // Post ...
 // @Title Create
-// @Description create Sitios_turisticos
-// @Param	body		body 	models.Sitios_turisticos	true		"body for Sitios_turisticos content"
-// @Success 201 {object} models.Sitios_turisticos
+// @Description create Tendencias
+// @Param	body		body 	models.Tendencias	true		"body for Tendencias content"
+// @Success 201 {object} models.Tendencias
 // @Failure 403 body is empty
 // @router / [post]
-func (c *Sitios_turisticosController) Post() {
-	fmt.Println("Metodo Post")
+func (c *TendenciasController) Post() {
 
 }
 
 // GetOne ...
 // @Title GetOne
-// @Description get Sitios_turisticos by id
+// @Description get Tendencias by id
 // @Param	id		path 	string	true		"The key for staticblock"
-// @Success 200 {object} models.Sitios_turisticos
+// @Success 200 {object} models.Tendencias
 // @Failure 403 :id is empty
 // @router /:id [get]
-func (c *Sitios_turisticosController) GetOne() {
-	fmt.Println("MEtodo GetbyID")
+func (c *TendenciasController) GetOne() {
 
 }
 
 // GetAll ...
 // @Title GetAll
-// @Description get Sitios_turisticos
+// @Description get Tendencias
 // @Param	query	query	string	false	"Filter. e.g. col1:v1,col2:v2 ..."
 // @Param	fields	query	string	false	"Fields returned. e.g. col1,col2 ..."
 // @Param	sortby	query	string	false	"Sorted-by fields. e.g. col1,col2 ..."
 // @Param	order	query	string	false	"Order corresponding to each sortby field, if single value, apply to all sortby fields. e.g. desc,asc ..."
 // @Param	limit	query	string	false	"Limit the size of result set. Must be an integer"
 // @Param	offset	query	string	false	"Start position of result set. Must be an integer"
-// @Success 200 {object} models.Sitios_turisticos
+// @Success 200 {object} models.Tendencias
 // @Failure 403
 // @router / [get]
-func (c *Sitios_turisticosController) GetAll() {
+func (c *TendenciasController) GetAll() {
 
 	// Obtener JSON de comentarios en una sola consulta
 	jsonComentariosStr, err := services.Metodo_get_all("host_api", "Comentarios?limit=0")
@@ -102,32 +99,12 @@ func (c *Sitios_turisticosController) GetAll() {
 			c.CustomAbort(500, "Error al procesar el JSON de comentarios")
 			return
 		}
-		var comentariosDetallados []map[string]interface{}
-
-		for _, comentario := range grupositios {
-			autor := comentario["IdUsuario"].(map[string]interface{})["Nombre"]
-			texto := comentario["Comentario"].(string)
-			calificacionStr := comentario["Calificacion"].(string)
-			calificacion, _ := strconv.Atoi(calificacionStr)
-
-			comentarioObj := map[string]interface{}{
-				"Autor":        autor,
-				"texto":        texto,
-				"calificacion": calificacion,
-			}
-			comentariosDetallados = append(comentariosDetallados, comentarioObj)
-		}
 
 		jsonsitio_resumido := map[string]interface{}{
 			"Nombre":      jsonsitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
 			"Descripcion": jsonsitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
 			"Fotositio":   jsonsitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
-			"Ubicacion":   jsonsitio["sitio consultado"].(map[string]interface{})["Ubicacion"],
-			"Telefono":    jsonsitio["sitio consultado"].(map[string]interface{})["IdUsuario"].(map[string]interface{})["NumeroTelefono"],
-			"Horario":     jsonsitio["sitio consultado"].(map[string]interface{})["Horario"],
-			"Comentarios": comentariosDetallados,
 		}
-
 
 		fmt.Printf("ID %v:\n", idsitio)
 		var ponderacion interface{}
@@ -159,11 +136,6 @@ func (c *Sitios_turisticosController) GetAll() {
 
 		resultado_final = append(resultado_final, jsonsitio_resumido)
 	}
-
-	sort.Slice(resultado_final, func(i, j int) bool {
-		// Comparar la ponderación de cada sitio
-		return resultado_final[i]["Ponderacion"].(float64) > resultado_final[j]["Ponderacion"].(float64)
-	})
 	c.Data["json"] = map[string]interface{}{
 		"status":    200,
 		"message":   "Consulta realizada correctamente",
@@ -175,25 +147,23 @@ func (c *Sitios_turisticosController) GetAll() {
 
 // Put ...
 // @Title Put
-// @Description update the Sitios_turisticos
+// @Description update the Tendencias
 // @Param	id		path 	string	true		"The id you want to update"
-// @Param	body		body 	models.Sitios_turisticos	true		"body for Sitios_turisticos content"
-// @Success 200 {object} models.Sitios_turisticos
+// @Param	body		body 	models.Tendencias	true		"body for Tendencias content"
+// @Success 200 {object} models.Tendencias
 // @Failure 403 :id is not int
 // @router /:id [put]
-func (c *Sitios_turisticosController) Put() {
-	fmt.Println("Metodo Put")
+func (c *TendenciasController) Put() {
 
 }
 
 // Delete ...
 // @Title Delete
-// @Description delete the Sitios_turisticos
+// @Description delete the Tendencias
 // @Param	id		path 	string	true		"The id you want to delete"
 // @Success 200 {string} delete success!
 // @Failure 403 id is empty
 // @router /:id [delete]
-func (c *Sitios_turisticosController) Delete() {
-	fmt.Println("Metodo Delete")
+func (c *TendenciasController) Delete() {
 
 }

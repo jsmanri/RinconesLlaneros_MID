@@ -101,36 +101,3 @@ func GroupByID(items []map[string]interface{}) map[interface{}][]map[string]inte
 
     return grouped
 }
-
-func PromedioNumeros(data []interface{}) float64 {
-    var suma float64
-    var cantidad int
-
-    for _, v := range data {
-        switch num := v.(type) {
-        case int:
-            suma += float64(num)
-            cantidad++
-        case float64:
-            suma += num
-            cantidad++
-        case float32:
-            suma += float64(num)
-            cantidad++
-        case int64:
-            suma += float64(num)
-            cantidad++
-        case int32:
-            suma += float64(num)
-            cantidad++
-        default:
-            // Ignorar tipos no numéricos
-        }
-    }
-
-    if cantidad == 0 {
-        return 0 // evitar división por cero
-    }
-
-    return suma / float64(cantidad)
-}
