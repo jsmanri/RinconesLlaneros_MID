@@ -26,6 +26,11 @@ func init() {
 			&controllers.TendenciasController{},
 		),
 	),
+	beego.NSNamespace("/Usuarios",
+			beego.NSInclude(
+				&controllers.UsuariosController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }

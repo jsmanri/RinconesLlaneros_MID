@@ -99,6 +99,15 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
         beego.ControllerComments{
+            Method: "Post",
+            Router: "/",
+            AllowHTTPMethods: []string{"post"},
+            MethodParams: param.Make(),
+            Filters: nil,
+            Params: nil})
+
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+        beego.ControllerComments{
             Method: "GetAll",
             Router: "/",
             AllowHTTPMethods: []string{"get"},
@@ -126,7 +135,7 @@ func init() {
 
     beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
         beego.ControllerComments{
-            Method: "DeleteUsuario",
+            Method: "Delete",
             Router: "/:id",
             AllowHTTPMethods: []string{"delete"},
             MethodParams: param.Make(),
