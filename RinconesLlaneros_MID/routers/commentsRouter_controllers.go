@@ -52,7 +52,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"],
         beego.ControllerComments{
             Method: "Post",
             Router: "/",
@@ -61,7 +61,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"],
         beego.ControllerComments{
             Method: "GetAll",
             Router: "/",
@@ -70,7 +70,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"],
         beego.ControllerComments{
             Method: "GetOne",
             Router: "/:id",
@@ -79,7 +79,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"],
         beego.ControllerComments{
             Method: "Put",
             Router: "/:id",
@@ -88,7 +88,7 @@ func init() {
             Filters: nil,
             Params: nil})
 
-    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:UsuariosController"],
+    beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"] = append(beego.GlobalControllerRouter["github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID/controllers:CrearusuarioController"],
         beego.ControllerComments{
             Method: "Delete",
             Router: "/:id",
