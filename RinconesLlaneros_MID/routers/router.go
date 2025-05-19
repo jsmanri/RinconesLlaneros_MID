@@ -21,10 +21,15 @@ func init() {
 			),
 		),
 		beego.NSNamespace("/admin",
-		beego.NSInclude(
-			&controllers.AdminController{},
+			beego.NSInclude(
+				&controllers.AdminController{},
+			),
 		),
-	),
-)
+		beego.NSNamespace("/newpassword",
+			beego.NSInclude(
+				&controllers.ActulizarContraseñaController{},
+			),
+		),
+	)
 	beego.AddNamespace(ns)
 }
