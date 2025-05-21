@@ -30,6 +30,11 @@ func init() {
 				&controllers.ActulizarContraseñaController{},
 			),
 		),
+		beego.NSNamespace("/Sesion",
+		    beego.NSInclude(
+				&controllers.IniciarSesionController{},
+			),
+		),
 	)
 	beego.AddNamespace(ns)
 }
