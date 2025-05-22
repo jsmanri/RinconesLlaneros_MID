@@ -44,10 +44,102 @@ func (c *Sitios_turisticosController) Post() {
 // @Failure 403 :id is empty
 // @router /:id [get]
 func (c *Sitios_turisticosController) GetOne() {
-	fmt.Println("MEtodo GetbyID")
+    idSitio := c.GetString(":id")
+    if idSitio == "" {
+        c.CustomAbort(400, "ID del sitio no proporcionado")
+        return
+    }
 
+    // Obtener JSON de comentarios en una sola consulta
+    jsonComentariosStr, err := services.Metodo_get_all("host_api", "Comentarios?limit=0")
+    if err != nil {
+        fmt.Println("Error al obtener comentarios desde el CRUD:", err)
+        c.CustomAbort(500, "Error al obtener los comentarios desde el CRUD")
+        return
+    }
+
+    // Procesar el JSON de comentarios
+    jsonComentarios, err := services.ProcesarJson(jsonComentariosStr)
+    if err != nil {
+        fmt.Println("Error al procesar los comentarios:", err)
+        c.CustomAbort(500, "Error al procesar el JSON de comentarios")
+        return
+    }
+
+    resultados_parcial := jsonComentarios["comentarios consultados"]
+    Arreglo_comentarios, _ := services.ConvertToSliceOfMaps(resultados_parcial)
+
+    // Agrupar comentarios por ID de sitio
+    groupedItems := services.GroupByID(Arreglo_comentarios)
+
+    // Obtener solo los comentarios del sitio solicitado
+    grupositios, existe := groupedItems[idSitio]
+    var comentariosDetallados []map[string]interface{}
+    if existe {
+        for _, comentario := range grupositios {
+            autor := comentario["IdUsuario"].(map[string]interface{})["Nombre"]
+            texto := comentario["Comentario"].(string)
+            calificacionStr := comentario["Calificacion"].(string)
+            calificacion, _ := strconv.Atoi(calificacionStr)
+
+            comentarioObj := map[string]interface{}{
+                "Autor":        autor,
+                "texto":        texto,
+                "calificacion": calificacion,
+            }
+            comentariosDetallados = append(comentariosDetallados, comentarioObj)
+        }
+    }
+
+    // Obtener datos del sitio turístico específico
+    urlSitio := "Sitios_Turisticos/" + idSitio
+    sitioStr, err := services.Metodo_get_all("host_api", urlSitio)
+    if err != nil {
+        fmt.Println("Error al obtener el sitio desde el CRUD:", err)
+        c.CustomAbort(500, "Error al obtener el sitio desde el CRUD")
+        return
+    }
+
+    jsonSitio, err := services.ProcesarJson(sitioStr)
+    if err != nil {
+        fmt.Println("Error al procesar el JSON del sitio:", err)
+        c.CustomAbort(500, "Error al procesar el JSON del sitio")
+        return
+    }
+
+    // Construir respuesta solo con el sitio solicitado
+    jsonsitio_resumido := map[string]interface{}{
+        "Id_Sitio":    jsonSitio["sitio consultado"].(map[string]interface{})["Id"],
+        "Nombre":      jsonSitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
+        "Descripcion": jsonSitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
+        "Fotositio":   jsonSitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
+        "Ubicacion":   jsonSitio["sitio consultado"].(map[string]interface{})["Ubicacion"],
+        "Telefono":    jsonSitio["sitio consultado"].(map[string]interface{})["IdUsuario"].(map[string]interface{})["NumeroTelefono"],
+        "Horario":     jsonSitio["sitio consultado"].(map[string]interface{})["Horario"],
+        "Comentarios": comentariosDetallados,
+    }
+
+    // Calcular ponderación si hay comentarios
+    if len(comentariosDetallados) > 0 {
+        var suma float64
+        for _, comentario := range comentariosDetallados {
+            suma += float64(comentario["calificacion"].(int))
+        }
+        jsonsitio_resumido["Ponderacion"] = suma / float64(len(comentariosDetallados))
+    } else {
+        jsonsitio_resumido["Ponderacion"] = 0.0
+    }
+
+    jsonsitio_resumido["Cantidad_comentarios"] = len(comentariosDetallados)
+
+    c.Data["json"] = map[string]interface{}{
+        "status":    200,
+        "message":   "Consulta realizada correctamente",
+        "resultado": jsonsitio_resumido,
+    }
+
+    c.ServeJSON()
 }
-
 // GetAll ...
 // @Title GetAll
 // @Description get Sitios_turisticos
@@ -119,6 +211,7 @@ func (c *Sitios_turisticosController) GetAll() {
 		}
 
 		jsonsitio_resumido := map[string]interface{}{
+			"Id_Sitio":    jsonsitio["sitio consultado"].(map[string]interface{})["Id"],
 			"Nombre":      jsonsitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
 			"Descripcion": jsonsitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
 			"Fotositio":   jsonsitio["sitio consultado"].(map[string]interface{})["FotoSitio"],

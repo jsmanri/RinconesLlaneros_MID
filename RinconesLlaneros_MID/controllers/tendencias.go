@@ -101,6 +101,7 @@ func (c *TendenciasController) GetAll() {
 		}
 
 		jsonsitio_resumido := map[string]interface{}{
+			"Id_Sitio":    jsonsitio["sitio consultado"].(map[string]interface{})["Id"],
 			"Nombre":      jsonsitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
 			"Descripcion": jsonsitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
 			"Fotositio":   jsonsitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
@@ -135,6 +136,7 @@ func (c *TendenciasController) GetAll() {
 		jsonsitio_resumido["Cantidad_comentarios"] = len(grupositios)
 
 		resultado_final = append(resultado_final, jsonsitio_resumido)
+		
 	}
 	c.Data["json"] = map[string]interface{}{
 		"status":    200,

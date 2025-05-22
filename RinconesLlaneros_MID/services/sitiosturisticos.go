@@ -89,14 +89,15 @@ func ConvertToSliceOfMaps(input interface{}) ([]map[string]interface{}, error) {
 	return result, nil
 
 }
-func GroupByID(items []map[string]interface{}) map[interface{}][]map[string]interface{} {
-    grouped := make(map[interface{}][]map[string]interface{})
+func GroupByID(items []map[string]interface{}) map[string][]map[string]interface{} {
+    grouped := make(map[string][]map[string]interface{})
 
-    for i, item := range items {
-		sitioturistico := items[i]["IdSitiosTuristicos"]
-		idsitio := sitioturistico.(map[string]interface{})["Id"]
-        id := idsitio
-        grouped[id] = append(grouped[id], item)
+    for _, item := range items {
+        sitioturistico := item["IdSitiosTuristicos"]
+        if sitioturisticoMap, ok := sitioturistico.(map[string]interface{}); ok {
+            id := fmt.Sprintf("%v", sitioturisticoMap["Id"]) // Convertimos el ID a string
+            grouped[id] = append(grouped[id], item)
+        }
     }
 
     return grouped
