@@ -52,7 +52,7 @@ func (c *Sitios_turisticosController) GetOne() {
 
     // Obtener JSON de comentarios en una sola consulta
     jsonComentariosStr, err := services.Metodo_get_all("host_api", "Comentarios?limit=0")
-    if err != nil {
+    if err != nil { 
         fmt.Println("Error al obtener comentarios desde el CRUD:", err)
         c.CustomAbort(500, "Error al obtener los comentarios desde el CRUD")
         return
