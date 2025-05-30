@@ -113,6 +113,8 @@ func (c *Sitios_turisticosController) GetOne() {
         "Nombre":      jsonSitio["sitio consultado"].(map[string]interface{})["NombreSitioTuristico"],
         "Descripcion": jsonSitio["sitio consultado"].(map[string]interface{})["DescripcionSitioTuristico"],
         "Fotositio":   jsonSitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
+		"Latitud":   jsonSitio["sitio consultado"].(map[string]interface{})["Latitud"],
+		"Longitud":   jsonSitio["sitio consultado"].(map[string]interface{})["Longitud"],
         "Ubicacion":   jsonSitio["sitio consultado"].(map[string]interface{})["Ubicacion"],
         "Telefono":    jsonSitio["sitio consultado"].(map[string]interface{})["IdUsuario"].(map[string]interface{})["NumeroTelefono"],
         "Horario":     jsonSitio["sitio consultado"].(map[string]interface{})["Horario"],

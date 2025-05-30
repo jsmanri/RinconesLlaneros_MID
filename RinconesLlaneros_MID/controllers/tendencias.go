@@ -2,7 +2,6 @@ package controllers
 
 import (
 	"fmt"
-	"reflect"
 	"strconv"
 
 	"github.com/astaxie/beego"
@@ -107,7 +106,6 @@ func (c *TendenciasController) GetAll() {
 			"Fotositio":   jsonsitio["sitio consultado"].(map[string]interface{})["FotoSitio"],
 		}
 
-		fmt.Printf("ID %v:\n", idsitio)
 		var ponderacion interface{}
 		var ponderacion_total []interface{}
 		for _, comentario := range grupositios {
@@ -115,14 +113,13 @@ func (c *TendenciasController) GetAll() {
 			fmt.Println("Cantidad comentarios", len(grupositios))
 
 			ponderacion = comentario["Calificacion"]
-			fmt.Println("Ponderacion", ponderacion)
 			ponderacion_total = append(ponderacion_total, ponderacion)
 		}
 
 		fmt.Println("Ponderacion total arreglo", ponderacion_total)
 		var suma float64
 		for _, ponderacion := range ponderacion_total {
-			fmt.Println("tipo dato", reflect.TypeOf(ponderacion))
+
 			fmt.Println("Ponderacion for ", ponderacion)
 			ponderacion_int, _ := strconv.Atoi(ponderacion.(string))
 			suma += float64(ponderacion_int)
@@ -136,7 +133,7 @@ func (c *TendenciasController) GetAll() {
 		jsonsitio_resumido["Cantidad_comentarios"] = len(grupositios)
 
 		resultado_final = append(resultado_final, jsonsitio_resumido)
-		
+
 	}
 	c.Data["json"] = map[string]interface{}{
 		"status":    200,
