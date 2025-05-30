@@ -26,9 +26,24 @@ func init() {
 			&controllers.TendenciasController{},
 		),
 	),
-	beego.NSNamespace("/Usuarios",
+	beego.NSNamespace("/creacionusu",
 			beego.NSInclude(
-				&controllers.UsuariosController{},
+				&controllers.CrearusuarioController{},
+			),
+		),
+		beego.NSNamespace("/admin",
+			beego.NSInclude(
+				&controllers.AdminController{},
+			),
+		),
+		beego.NSNamespace("/newpassword",
+			beego.NSInclude(
+				&controllers.ActulizarContraseñaController{},
+			),
+		),
+		beego.NSNamespace("/Sesion",
+		    beego.NSInclude(
+				&controllers.IniciarSesionController{},
 			),
 		),
 	)
