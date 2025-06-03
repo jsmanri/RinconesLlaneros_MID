@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/astaxie/beego"
 )
 
 // CrearusuarioController operations for Crearusuario
@@ -134,11 +136,11 @@ func (c *CrearusuarioController) Post() {
 
 	// Crear el JSON para el servicio de Usuarios
 	jsonUsuario := map[string]interface{}{
-		"Nombre":           input["nombre"],
-		"Rol":              map[string]interface{}{"Id": input["rol"]},
-		"Correo":           input["correo"],
-		"Cedula":           input["cedula"],
-		"NumeroTelefono":   input["telefono"],
+		"Nombre":           input["Nombre"],
+		"Rol":              map[string]interface{}{"Id": input["Rol"]},
+		"Correo":           input["Correo"],
+		"Cedula":           input["Cedula"],
+		"NumeroTelefono":   input["Telefono"],
 		"FotoPerfil":       string(fotoPerfilJSON), // Aquí enviamos el JSON como texto
 		"IdCredencialesCredenciales": map[string]interface{}{
 			"Id": idCredencial,
@@ -150,6 +152,7 @@ func (c *CrearusuarioController) Post() {
 
 	// Realizar la solicitud POST al servicio de usuarios
 	reqBody = encodeToJSON(jsonUsuario)
+	fmt.Println("hggggggggggggggg",reqBody)
 	respUsuario, err := client.Post(servicioUsuarios, "application/json", reqBody)
 	if err != nil {
 		c.Data["json"] = map[string]interface{}{

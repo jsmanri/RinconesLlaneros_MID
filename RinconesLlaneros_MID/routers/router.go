@@ -19,33 +19,33 @@ func init() {
 		beego.NSNamespace("/Sitios_turisticos",
 			beego.NSInclude(
 				&controllers.Sitios_turisticosController{},
-			),
 		),
+	),
 		beego.NSNamespace("/Tendencias",
 		beego.NSInclude(
 			&controllers.TendenciasController{},
 		),
 	),
-	beego.NSNamespace("/creacionusu",
+	    beego.NSNamespace("/creacionusu",
 			beego.NSInclude(
 				&controllers.CrearusuarioController{},
-			),
 		),
+	),
 		beego.NSNamespace("/admin",
 			beego.NSInclude(
 				&controllers.AdminController{},
-			),
 		),
+	),
 		beego.NSNamespace("/newpassword",
 			beego.NSInclude(
 				&controllers.ActulizarContraseñaController{},
-			),
 		),
+	),
 		beego.NSNamespace("/Sesion",
 		    beego.NSInclude(
 				&controllers.IniciarSesionController{},
-			),
 		),
+	),
 	)
 	beego.AddNamespace(ns)
 }
