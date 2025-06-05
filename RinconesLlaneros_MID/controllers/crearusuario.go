@@ -1,12 +1,14 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/astaxie/beego"
 )
 
 // CrearusuarioController operations for Crearusuario
@@ -150,6 +152,7 @@ func (c *CrearusuarioController) Post() {
 
 	// Realizar la solicitud POST al servicio de usuarios
 	reqBody = encodeToJSON(jsonUsuario)
+	fmt.Println("json para el api crud",reqBody)
 	respUsuario, err := client.Post(servicioUsuarios, "application/json", reqBody)
 	if err != nil {
 		c.Data["json"] = map[string]interface{}{
