@@ -1,12 +1,13 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
 	"bytes"
 	"encoding/json"
 	"io/ioutil"
 	"net/http"
 	"time"
+
+	"github.com/astaxie/beego"
 )
 
 // CrearusuarioController operations for Crearusuario
@@ -32,7 +33,7 @@ func (c *CrearusuarioController) URLMapping() {
 // @router / [post]
 func (c *CrearusuarioController) Post() {
 
-		// Parsear el cuerpo de la solicitud
+	// Parsear el cuerpo de la solicitud
 	var input map[string]interface{}
 	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &input); err != nil {
 		c.Data["json"] = map[string]interface{}{
@@ -134,12 +135,12 @@ func (c *CrearusuarioController) Post() {
 
 	// Crear el JSON para el servicio de Usuarios
 	jsonUsuario := map[string]interface{}{
-		"Nombre":           input["nombre"],
-		"Rol":              map[string]interface{}{"Id": input["rol"]},
-		"Correo":           input["correo"],
-		"Cedula":           input["cedula"],
-		"NumeroTelefono":   input["telefono"],
-		"FotoPerfil":       string(fotoPerfilJSON), // Aquí enviamos el JSON como texto
+		"Nombre":         input["nombre"],
+		"Rol":            map[string]interface{}{"Id": input["rol"]},
+		"Correo":         input["correo"],
+		"Cedula":         input["cedula"],
+		"NumeroTelefono": input["telefono"],
+		"FotoPerfil":     string(fotoPerfilJSON), // Aquí enviamos el JSON como texto
 		"IdCredencialesCredenciales": map[string]interface{}{
 			"Id": idCredencial,
 		},
@@ -188,8 +189,6 @@ func encodeToJSON(data interface{}) *bytes.Buffer {
 	json.NewEncoder(buffer).Encode(data)
 	return buffer
 }
-
-
 
 // GetOne ...
 // @Title GetOne
