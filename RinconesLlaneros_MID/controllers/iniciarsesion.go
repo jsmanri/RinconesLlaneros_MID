@@ -58,6 +58,7 @@ func (c *IniciarSesionController) Post() {
     var crudResp struct {
         UsuariosConsultados []struct {
             Id   int `json:"Id"`
+            Activo bool `json:"Activo"`
             Rol struct {
                 Id int `json:"Id"`
             } `json:"Rol"`
@@ -85,9 +86,10 @@ func (c *IniciarSesionController) Post() {
     }
 
     // 3. Todo ok, responde con id_usuario y id_rol
-    respuesta := map[string]int{
+    respuesta := map[string]interface{}{
         "id_usuario": usuario.Id,
         "id_rol":     usuario.Rol.Id,
+        "activo":     usuario.Activo,
     }
     c.Data["json"] = respuesta
     c.ServeJSON()
