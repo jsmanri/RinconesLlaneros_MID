@@ -1,13 +1,13 @@
 package controllers
 
 import (
-	"github.com/astaxie/beego"
-	"encoding/json"
-	"net/http"
-	"io/ioutil"
-	"fmt"
 	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
 
+	"github.com/astaxie/beego"
 )
 
 // ActulizarContraseñaController operations for ActulizarContraseña
