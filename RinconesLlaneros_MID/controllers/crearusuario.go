@@ -136,12 +136,12 @@ func (c *CrearusuarioController) Post() {
 
 	// Crear el JSON para el servicio de Usuarios
 	jsonUsuario := map[string]interface{}{
-		"Nombre":         input["nombre"],
-		"Rol":            map[string]interface{}{"Id": input["rol"]},
-		"Correo":         input["correo"],
-		"Cedula":         input["cedula"],
-		"NumeroTelefono": input["telefono"],
-		"FotoPerfil":     string(fotoPerfilJSON), // Aquí enviamos el JSON como texto
+		"Nombre":           input["Nombre"],
+		"Rol":              map[string]interface{}{"Id": input["Rol"]},
+		"Correo":           input["Correo"],
+		"Cedula":           input["Cedula"],
+		"NumeroTelefono":   input["Telefono"],
+		"FotoPerfil":       string(fotoPerfilJSON), // Aquí enviamos el JSON como texto
 		"IdCredencialesCredenciales": map[string]interface{}{
 			"Id": idCredencial,
 		},
