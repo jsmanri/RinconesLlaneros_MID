@@ -30,68 +30,69 @@ func (c *IniciarSesionController) URLMapping() {
 // @Failure 403 body is empty
 // @router / [post]
 func (c *IniciarSesionController) Post() {
+	// 1. Struct para recibir login
+	var loginReq struct {
+		Correo     string `json:"correo"`
+		Contrasena string `json:"contrasena"`
+	}
+	if err := json.Unmarshal(c.Ctx.Input.RequestBody, &loginReq); err != nil {
+		c.Data["json"] = map[string]string{"error": "json_invalido"}
+		c.Ctx.Output.SetStatus(400)
+		c.ServeJSON()
+		return
+	}
 
-	    // 1. Struct anónimo para login
-    var loginReq struct {
-        Correo     string `json:"correo"`
-        Contrasena string `json:"contrasena"`
-    }
-    if err := json.Unmarshal(c.Ctx.Input.RequestBody, &loginReq); err != nil {
-        c.Data["json"] = map[string]string{"error": "json_invalido"}
-        c.Ctx.Output.SetStatus(400)
-        c.ServeJSON()
-        return
-    }
+	// 2. Consultar usuario en el CRUD
+	usuariosUrl := beego.AppConfig.String("Servicio_Usuarios")
+	reqUrl := fmt.Sprintf("%s?query=Correo:%s", usuariosUrl, loginReq.Correo)
+	resp, err := http.Get(reqUrl)
+	if err != nil {
+		c.Data["json"] = map[string]string{"error": "error_conexion_crud"}
+		c.Ctx.Output.SetStatus(500)
+		c.ServeJSON()
+		return
+	}
+	defer resp.Body.Close()
 
-    usuariosUrl := beego.AppConfig.String("Servicio_Usuarios")
-    reqUrl := fmt.Sprintf("%s?query=Correo:%s", usuariosUrl, loginReq.Correo)
-    resp, err := http.Get(reqUrl)
-    if err != nil {
-        c.Data["json"] = map[string]string{"error": "error_conexion_crud"}
-        c.Ctx.Output.SetStatus(500)
-        c.ServeJSON()
-        return
-    }
-    defer resp.Body.Close()
+	// 3. Leer la respuesta del CRUD incluyendo el campo `Activo`
+	var crudResp struct {
+		UsuariosConsultados []struct {
+			Id     int  `json:"Id"`
+			Activo bool `json:"Activo"` // 🔹 Agregamos `Activo`
+			Rol    struct {
+				Id int `json:"Id"`
+			} `json:"Rol"`
+			IdCredencialesCredenciales struct {
+				Id         int    `json:"Id"`
+				Contrasena string `json:"Contraseña"`
+			} `json:"IdCredencialesCredenciales"`
+		} `json:"usuarios consultados"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&crudResp); err != nil || len(crudResp.UsuariosConsultados) == 0 {
+		c.Data["json"] = map[string]string{"error": "correo_no_encontrado"}
+		c.Ctx.Output.SetStatus(404)
+		c.ServeJSON()
+		return
+	}
 
-    // Estructura para leer la respuesta del CRUD
-    var crudResp struct {
-        UsuariosConsultados []struct {
-            Id   int `json:"Id"`
-            Rol struct {
-                Id int `json:"Id"`
-            } `json:"Rol"`
-            IdCredencialesCredenciales struct {
-                Id         int    `json:"Id"`
-                Contrasena string `json:"Contraseña"`
-            } `json:"IdCredencialesCredenciales"`
-        } `json:"usuarios consultados"`
-    }
-    if err := json.NewDecoder(resp.Body).Decode(&crudResp); err != nil || len(crudResp.UsuariosConsultados) == 0 {
-        c.Data["json"] = map[string]string{"error": "correo_no_encontrado"}
-        c.Ctx.Output.SetStatus(404)
-        c.ServeJSON()
-        return
-    }
+	usuario := crudResp.UsuariosConsultados[0]
 
-    usuario := crudResp.UsuariosConsultados[0]
+	// 4. Validar contraseña
+	if usuario.IdCredencialesCredenciales.Contrasena != loginReq.Contrasena {
+		c.Data["json"] = map[string]string{"error": "contrasena_incorrecta"}
+		c.Ctx.Output.SetStatus(401)
+		c.ServeJSON()
+		return
+	}
 
-    // 2. Validar contraseña (aquí debe ir el hash si usas hash, esto es solo ejemplo simple)
-    if usuario.IdCredencialesCredenciales.Contrasena != loginReq.Contrasena {
-        c.Data["json"] = map[string]string{"error": "contrasena_incorrecta"}
-        c.Ctx.Output.SetStatus(401)
-        c.ServeJSON()
-        return
-    }
-
-    // 3. Todo ok, responde con id_usuario y id_rol
-    respuesta := map[string]int{
-        "id_usuario": usuario.Id,
-        "id_rol":     usuario.Rol.Id,
-    }
-    c.Data["json"] = respuesta
-    c.ServeJSON()
-
+	// 5. Retornar la respuesta incluyendo `activo`
+	respuesta := map[string]interface{}{
+		"id_usuario": usuario.Id,
+		"id_rol":     usuario.Rol.Id,
+		"activo":     usuario.Activo, // 🔹 Enviar estado de usuario activo/inactivo
+	}
+	c.Data["json"] = respuesta
+	c.ServeJSON()
 }
 
 // GetOne ...

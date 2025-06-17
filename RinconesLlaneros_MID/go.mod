@@ -1,6 +1,6 @@
 module github.com/sena_2824182/RinconesLlaneros_MID/RinconesLlaneros_MID
 
-go 1.23.1
+go 1.24.0
 
 require (
 	github.com/astaxie/beego v1.12.3

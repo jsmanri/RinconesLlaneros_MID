@@ -60,7 +60,7 @@ func (c *AdminController) GetOne() {
 func (c *AdminController) GetAll() {
 
 	// Definir la URL del API CRUD
-	apiURL := "http://localhost:8082/v1/Usuarios?limit=0"
+	apiURL := "http://localhost:8080/v1/Usuarios?limit=0"
 
 	// Realizar la solicitud GET al API CRUD
 	client := &http.Client{Timeout: 10 * time.Second}
@@ -134,17 +134,26 @@ func (c *AdminController) GetAll() {
 	}
 
 	// Crear una lista nueva solo con los campos necesarios (Nombre, Activo)
-	var filteredUsuarios []map[string]interface{}
-    for _, user := range usuarios {
-	userData, ok := user.(map[string]interface{})
-	    if ok {
-		// Agrega también el ID del usuario
-		filteredUser := map[string]interface{}{
-			"Id":     userData["Id"],
-			"Nombre": userData["Nombre"],
-			"Activo": userData["Activo"],
-		}
-		filteredUsuarios = append(filteredUsuarios, filteredUser)
+var filteredUsuarios []map[string]interface{}
+for _, user := range usuarios {
+    userData, ok := user.(map[string]interface{})
+    if ok {
+        // 🔹 Obtener el nombre del rol del usuario
+        rolNombre := ""
+        if rolData, ok := userData["Rol"].(map[string]interface{}); ok {
+            if nombre, ok := rolData["Nombre"].(string); ok {
+                rolNombre = nombre // 📌 Se asigna correctamente el rol
+            }
+        }
+
+        // 🔹 Agregar el ID, Nombre, Activo y RolNombre al usuario filtrado
+        filteredUser := map[string]interface{}{
+            "Id":        userData["Id"],
+            "Nombre":    userData["Nombre"],
+            "Activo":    userData["Activo"],
+            "RolNombre": rolNombre,
+        }
+        filteredUsuarios = append(filteredUsuarios, filteredUser)
 
 			// Obtener la fecha de creación del usuario
 			fechaCreacion, ok := userData["FechaCreacion"].(string)
@@ -174,7 +183,7 @@ func (c *AdminController) GetAll() {
 				if rolId, ok := rolData["Id"].(float64); ok { // El ID del Rol es un número
 					if rolId == 2 { // Cliente
 						roleCounts[0]["Count"] = roleCounts[0]["Count"].(int) + 1
-					} else if rolId == 3 { // Vendedor
+					} else if rolId == 1 { // Vendedor
 						roleCounts[1]["Count"] = roleCounts[1]["Count"].(int) + 1
 					}
 				}

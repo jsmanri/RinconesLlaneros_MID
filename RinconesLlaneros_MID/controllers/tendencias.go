@@ -109,25 +109,19 @@ func (c *TendenciasController) GetAll() {
 		var ponderacion interface{}
 		var ponderacion_total []interface{}
 		for _, comentario := range grupositios {
-			fmt.Printf("  %v\n", comentario)
-			fmt.Println("Cantidad comentarios", len(grupositios))
 
 			ponderacion = comentario["Calificacion"]
 			ponderacion_total = append(ponderacion_total, ponderacion)
 		}
 
-		fmt.Println("Ponderacion total arreglo", ponderacion_total)
 		var suma float64
 		for _, ponderacion := range ponderacion_total {
 
-			fmt.Println("Ponderacion for ", ponderacion)
 			ponderacion_int, _ := strconv.Atoi(ponderacion.(string))
 			suma += float64(ponderacion_int)
 		}
 		total_ponderacion := suma / float64(len(ponderacion_total))
 
-		fmt.Println("Ponderacion media", suma)
-		fmt.Println("Ponderacion total", total_ponderacion)
 
 		jsonsitio_resumido["Ponderacion"] = total_ponderacion
 		jsonsitio_resumido["Cantidad_comentarios"] = len(grupositios)
